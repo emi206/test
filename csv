@@ -1,0 +1,50 @@
+import pandas as pd
+import numpy as np
+from functools import reduce
+from datetime import datetime
+import bql
+import os
+bq=bql.Service()
+
+indx={
+    'TPX Index',
+    'SPX Index',
+    'MXWO Index',
+    'MXEU Index'
+}
+
+enddate=datetime.today().date()
+startdate=datetime('1979-01-01')
+
+def fetch_px(index, st, ed):
+    daterg=bq.func.range(st, ed)
+    px={index : bq.data.px_last(dates=daterg, frq="D")}
+    px_req=bql.Request(index, px)
+    px_resp=bq.execute(px_req)
+    px_df=px_resp[0].df().dropna().reset_index().drop({'CURRENCY', 'ID'}, axis=1)
+
+    return px_df
+
+def fetch_index_name(indices):
+    name=bq.data.name()    
+
+def fetch_index_px(indices, st, ed):
+    df=pd.DataFrame(pd.date_range(st, ed), columns=['DATE'])
+    for i, ind in enumerate(indices):
+        df_index=fetch_px(ind, st, ed)
+        df=df.merge(df_index, on=['DATE'], how='outer').dropna()
+    
+    for k, ind in enumerate(indices):
+        header=str(k)
+        index_start=df[ind][0]
+        df[header]=df[ind].div(index_start).mul(100)
+    
+    csvfolderpath=os.getwd()
+    csvfilename='test.csv'
+    csvpath=Path(folderpath + '/' + csvfilename)
+    strpath=str(csvpath)
+    exportcsv=df.to_csv(strpath)
+    
+    return exportcsv
+    
+    fetch_index_px(indx, startdate, enddate)
