@@ -1,0 +1,130 @@
+select ltrim(rtrim(t_sec)) as Symbol,
+       ltrim(rtrim(t_action)) as Side,
+       ltrim(rtrim(t_manager)) as Manager,
+       ltrim(rtrim(t_trader)) as Trader,
+       t_tradedate as TradeDate,
+       t_settledate as SettleDate,
+t_index,
+       trd.T_TradeID as TradeID,
+       COVERT(VARCHAR(23),b_index2,121) as Bindex2,
+Case when brk.b_brokderID is null then ltrim(rtrim(convert(varchar, b_index2, 109))) Else ltrim(rtrim(brk.b_brokerID)) END as brokerID,
+       ltrim(rtrim(convert(varchar(225),t_note))) as Note,
+       ltrim(rtrim(sec_exchange)) as Exchange,
+       ltrim(rtrim(sec_type)) as SecType,
+       ltrim(rtrim(sec_cusip)) as Cusip,
+       totalc.totalamount as TotalShares,
+       totalc.avgprice as AveragePrice,
+       sec_mult as Multiplier,
+       ltrim(rtrim(sec_long)) as Description,
+       ltrim(rtrim(broker)) as Broker,
+       ltrim(rtrim(br_long)) as BrokerDesc,
+       ltrim(rtrim(b_comm)) as Commission,
+       ltrim(rtrim(sec_currency)) as SecurityCurrency,
+       ltrim(rtrim(settlecurrency)) as SettleCurrency,
+       ltrim(rtrim(stepout)) as Stepout,
+       ltrim(rtrim(prt)) as Portfolio,
+       ltrim(rtrim(des)) as PrtDes,
+       amount as Amount,
+       price as Price,
+       ltrim(rtrim(custodian)) as Custodian,
+       ltrim(rtrim(stepoutcomm)) as StepoutComm,
+       ltrim(rtrim(boc)) as BrokOfCredit,
+       totalfees as Fees,
+       CASE WHEN comImplied=0 THEN 'F' ELSE 'T' END as comimpled,
+       CASE WHEN comImplied=0 THEN totalcomission ELSE 0 END as totalcommission,
+       NetMoney as NetMoney,
+       accruedInt as AccruedInterest,
+       ltrim(rtrum(fromCurr)) as FromCurrency,
+       ltrim(rtrim(toCurr)) as ToCurrency
+from tc_trade trd
+       JOIN tc_alcf alcf ON t_index=alcf.a_index
+       JOIN tc_brok brk ON alcf.a_index=b_index and alcf.index2=b_index2
+       JOIN tr_sec sec ON t_sec=sec_sym
+       JOIN tr_sec sec ON t_sec = sec_sym
+       JOIN tc_brkr ON b_broker = br_short
+       JOIN (SELECT a_index, index2, sum(amount) as totalamount, sum(amount * price)/sum(amount) as avgprice
+              FROM tc_alcf
+              GROUP BY a_index, index2
+              ) totalc ON b_index=totalc.a_index AND b_index2 = totalc.index2
+where t_status in ('DONE','PART')
+       and t_statusbreak in ('S','A')
+       and ('<ALL>' IN (?MANAGER) or t_manager IN (?MANAGER))
+       and ('<ALL>' IN (?BROKER) or b_broker IN (?BROKER))
+       and ('<ALL>' IN (?TRADER) or t_trader IN (?TRADER))
+       and ('<ALL>' IN (?SECURITY) or t_sec IN (?SECURITY))
+       and (t_tradedate>=?STARTDATE and t_tradedate <=?ENDDATE)
+UNION ALL
+
+select
+       ltrim(rtrim(t_sec)) as Symbol,
+       ltrim(rtrim(t_action)) as Side,
+       ltrim(rtrim(t_manager)) as Manager,
+       ltrim(rtrim(t_trader)) as Trader,
+       t_tradedate as TradeDate,
+       t_settledate as SettleDate,
+t_index,
+       trd.T_TradeID as TradeID,
+       CONVERT(VARCHAR(23),b_index2,121) as Bindex2,
+Case when brk.b_brokerID is null then ltrim(rtrim(convert(varchar,b_index2,109))) Else ltrim(rtrim(brk.b_brokerID)) END as brokerID,
+       ltrim(rtrim(convert(varchar(225),t_note))) as Note,
+       ltrim(rtrim(sec_exchange)) as Exchange,
+       ltrim(rtrim(sec_type)) as SecType,
+       ltrim(rtrim(sec_cusip)) as Cusip,
+       totalc.totalamount as TotalShares,
+       totalc.avgprice as AveragePrice,
+       sec_mult as Multiplier,
+       ltrim(rtrim(sec_long)) as Description,
+       ltrim(rtrim(broker)) as Broker, 
+       ltrim(rtrim(br_long)) as BrokerDesc,
+       ltrim(rtrim(b_comm)) as Commission,
+       ltrim(rtrim(sec_currency)) as SecurityCurrency,
+       ltrim(rtrim(settlecurrency)) as SettleCurrency,
+       ltrim(rtrim(stepout)) as Stepout,
+       ltrim(rtrim(prt)) as Portfolio,
+       ltrim(rtrim(des)) as PrtDes,
+       amount as Amount,
+       price as Price,
+       ltrim(rtrim(custodian)) as Custodian,
+       ltrim(rtrim(stepoutcomm)) as StepoutComm,
+       ltrim(rtrim(boc)) as BrokOfCredit,
+       totalfees as Fees,
+       CASE WHEN comImplied=0 THEN 'F' ELSE 'T' END as comimpled,
+       CASE WHEN comImplied=0 THEN totalcommission ELSE 0 END as totalcommission,
+       NetMoney as NetMoney,
+       accruedInt as AccruedInterest,
+       ltrim(rtrim(fromCurr)) as FromCurrency,
+       ltrim(rtrim(toCurr)) as ToCurrency
+from TCARCHIVE..tc_trade trd
+      JOIN TCARCHIVE..tc_alcf alcf ON t_index=alcf.a_index
+      JOIN TCARCHIVE..tc_brok brk ON alcf.a_index=b_index and alcf.index2=b_index2
+      JOIN tr_sec sec ON t_sec=sec_sym
+      JOIN tc_brkr ON b_broker =br_short
+      JOIN (SELECT a_index, index2, sum(amount) as totalamount, sum(amount*price)/sum(amount) as avgprice
+                FROM TCARCHIVE..tc_alcf
+                GROUP BY a_index, index2
+                ) totaclc ON b_index=totalc.a_index AND b_index2=totalc.index2
+where t_status in ('DONE','PART')
+      and t_statusbreak in ('S','A')
+      and ('<ALL>' IN (?MANAGER) Or t_manager IN (?MANAGER))
+      and ('<ALL>' IN (?BROKER) or b_broker IN (?BROKER))
+      and ('<ALL>' IN (?TRADER) Or t_trader IN (?TRADER))
+      and ('<ALL>' IN (?SECURITY) or t_sec IN (?SECURITY))
+      and (t_tradedate ?=?STARTDATE and t_tradedate <=?ENDDATE) 
+order by Symbol, Bindex2      
+
+
+
+
+set no count on 
+SELECT LTRIM(rtrim(convert(varchar(23), t_index,121))) as t_index,
+ltrim(rtrim(convert(varchar(23),b_index2,121))) as b_index2,
+ltrim(rtrim(convert(datetime,p_index3,101))) as p_index3,
+p_price,
+isnull(p_amount,0) as p_amount,
+isnull(b_amount,0) as b_amount,
+(p_price * isnull(p_amount,0)) as WPrice,
+sec_exchange as exchange,
+trd.tradeID
+FROM tc_trade trd
+JOIN tc_brok brk ON t_index=b_index
+JOIN tc_pr
